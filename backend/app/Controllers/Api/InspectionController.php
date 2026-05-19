@@ -89,13 +89,18 @@ class InspectionController extends BaseController
                 ->setJSON(['message' => 'Некорректное тело запроса']);
         }
 
+        $data = $this->normalizePayload($data);
+
         $validation = service('validation');
         $validation->setRules($this->rules());
 
         if (!$validation->run($data)) {
             return $this->response
                 ->setStatusCode(422)
-                ->setJSON(['errors' => $validation->getErrors()]);
+                ->setJSON([
+                    'message' => 'Проверьте заполнение полей проверки',
+                    'errors' => $validation->getErrors(),
+                ]);
         }
 
         $model = new InspectionModel();
@@ -124,13 +129,18 @@ class InspectionController extends BaseController
                 ->setJSON(['message' => 'Проверка не найдена']);
         }
 
+        $data = $this->normalizePayload($data);
+
         $validation = service('validation');
         $validation->setRules($this->rules());
 
         if (!$validation->run($data)) {
             return $this->response
                 ->setStatusCode(422)
-                ->setJSON(['errors' => $validation->getErrors()]);
+                ->setJSON([
+                    'message' => 'Проверьте заполнение полей проверки',
+                    'errors' => $validation->getErrors(),
+                ]);
         }
 
         $model->update($id, $data);
@@ -327,16 +337,75 @@ class InspectionController extends BaseController
             ->where('i.deleted_at', null);
     }
 
+    private function normalizePayload(array $data): array
+    {
+        return [
+            'sme_id' => isset($data['sme_id']) ? (int) $data['sme_id'] : null,
+            'planned_date' => trim((string) ($data['planned_date'] ?? '')),
+            'inspection_type' => trim((string) ($data['inspection_type'] ?? '')),
+            'authority' => trim((string) ($data['authority'] ?? '')),
+            'basis' => trim((string) ($data['basis'] ?? '')),
+            'status' => trim((string) ($data['status'] ?? 'planned')),
+            'comment' => trim((string) ($data['comment'] ?? '')),
+        ];
+    }
     private function rules(): array
     {
         return [
-            'sme_id' => 'required|integer|is_not_unique[smes.id]',
-            'planned_date' => 'required|valid_date[Y-m-d]',
-            'inspection_type' => 'required|min_length[2]|max_length[255]',
-            'authority' => 'required|min_length[2]|max_length[255]',
-            'basis' => 'permit_empty|max_length[500]',
-            'status' => 'required|in_list[planned,completed,cancelled]',
-            'comment' => 'permit_empty',
+            'sme_id' => [
+                'label' => 'СМП',
+                'rules' => 'required|integer|is_not_unique[smes.id]',
+                'errors' => [
+                    'required' => 'Выберите СМП',
+                    'integer' => 'Некорректное значение СМП',
+                    'is_not_unique' => 'Выбранное СМП не найдено',
+                ],
+            ],
+            'planned_date' => [
+                'label' => 'Плановая дата',
+                'rules' => 'required|valid_date[Y-m-d]',
+                'errors' => [
+                    'required' => 'Укажите плановую дату',
+                    'valid_date' => 'Укажите дату в корректном формате',
+                ],
+            ],
+            'inspection_type' => [
+                'label' => 'Тип проверки',
+                'rules' => 'required|min_length[2]|max_length[255]',
+                'errors' => [
+                    'required' => 'Укажите тип проверки',
+                    'min_length' => 'Тип проверки должен содержать минимум 2 символа',
+                    'max_length' => 'Тип проверки не должен быть длиннее 255 символов',
+                ],
+            ],
+            'authority' => [
+                'label' => 'Орган проверки',
+                'rules' => 'required|min_length[2]|max_length[255]',
+                'errors' => [
+                    'required' => 'Укажите орган проверки',
+                    'min_length' => 'Орган проверки должен содержать минимум 2 символа',
+                    'max_length' => 'Орган проверки не должен быть длиннее 255 символов',
+                ],
+            ],
+            'basis' => [
+                'label' => 'Основание',
+                'rules' => 'permit_empty|max_length[500]',
+                'errors' => [
+                    'max_length' => 'Основание не должно быть длиннее 500 символов',
+                ],
+            ],
+            'status' => [
+                'label' => 'Статус',
+                'rules' => 'required|in_list[planned,completed,cancelled]',
+                'errors' => [
+                    'required' => 'Выберите статус',
+                    'in_list' => 'Выберите корректный статус',
+                ],
+            ],
+            'comment' => [
+                'label' => 'Комментарий',
+                'rules' => 'permit_empty',
+            ],
         ];
     }
 }
