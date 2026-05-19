@@ -1,0 +1,62 @@
+# =====================
+# OS / IDE
+# =====================
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# =====================
+# ENV
+# =====================
+.env
+.env.*
+!.env.example
+
+# =====================
+# BACKEND (CodeIgniter / PHP)
+# =====================
+# CodeIgniter writable runtime files
+backend/writable/cache/*
+backend/writable/debugbar/*
+backend/writable/logs/*
+backend/writable/session/*
+backend/writable/uploads/*
+
+!backend/writable/cache/index.html
+!backend/writable/debugbar/index.html
+!backend/writable/logs/index.html
+!backend/writable/session/index.html
+!backend/writable/uploads/index.html
+
+!backend/writable/cache/.gitkeep
+!backend/writable/debugbar/.gitkeep
+!backend/writable/logs/.gitkeep
+!backend/writable/session/.gitkeep
+!backend/writable/uploads/.gitkeep
+backend/vendor/
+# Backend build artifacts
+backend/builds
+backend/builds/
+
+
+# =====================
+# FRONTEND (Angular)
+# =====================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+
+# =====================
+# build artifacts
+# =====================
+dist/
+build/
+
+# =====================
+# logs
+# =====================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

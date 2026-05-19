@@ -1,0 +1,298 @@
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">
+        {{ id ? 'Редактирование проверки' : 'Добавление проверки' }}
+      </h1>
+
+      <div class="text-muted">
+        {{ id ? 'Изменение данных плановой проверки' : 'Создание новой записи в реестре проверок' }}
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 align-items-start">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        [disabled]="saving"
+        (click)="cancel()"
+      >
+        Назад к списку
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="loading || saving"
+        (click)="save()"
+      >
+        <span
+          *ngIf="saving"
+          class="spinner-border spinner-border-sm me-1"
+        ></span>
+
+        {{ saving ? 'Сохранение...' : 'Сохранить' }}
+      </button>
+    </div>
+  </div>
+
+  <div
+    *ngIf="loading"
+    class="alert alert-info d-flex align-items-center gap-2"
+  >
+    <span class="spinner-border spinner-border-sm"></span>
+    <span>Загрузка данных...</span>
+  </div>
+
+  <div
+    *ngIf="error"
+    class="alert alert-danger"
+  >
+    {{ error }}
+  </div>
+
+  <div
+    *ngIf="errors.length > 0"
+    class="alert alert-danger"
+  >
+    <div class="fw-semibold mb-2">Ошибки:</div>
+
+    <ul class="mb-0">
+      <li *ngFor="let item of errors">
+        {{ item }}
+      </li>
+    </ul>
+  </div>
+
+  <form
+    *ngIf="!loading"
+    (ngSubmit)="save()"
+  >
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+          <div>
+            <div class="fw-semibold">Субъект малого предпринимательства</div>
+            <div class="text-muted small">
+              Данные организации или предпринимателя, к которому относится проверка
+            </div>
+          </div>
+
+          <span class="badge text-bg-primary align-self-start">
+            СМП
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label">
+              ИНН <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="sme_inn"
+              class="form-control"
+              placeholder="Введите ИНН"
+              required
+              [disabled]="saving"
+              [(ngModel)]="form.sme_inn"
+            >
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">
+              Название СМП <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="sme_name"
+              class="form-control"
+              placeholder="Название организации"
+              required
+              [disabled]="saving"
+              [(ngModel)]="form.sme_name"
+            >
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Адрес</label>
+
+            <input
+              type="text"
+              name="sme_address"
+              class="form-control"
+              placeholder="Адрес СМП"
+              [disabled]="saving"
+              [(ngModel)]="form.sme_address"
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+          <div>
+            <div class="fw-semibold">Параметры проверки</div>
+            <div class="text-muted small">
+              Дата, тип, контролирующий орган и текущий статус проверки
+            </div>
+          </div>
+
+          <span
+            class="badge align-self-start"
+            [ngClass]="{
+              'text-bg-primary': form.status === 'planned',
+              'text-bg-success': form.status === 'completed',
+              'text-bg-secondary': form.status === 'cancelled'
+            }"
+          >
+            {{
+              form.status === 'planned'
+                ? 'Запланирована'
+                : form.status === 'completed'
+                  ? 'Завершена'
+                  : form.status === 'cancelled'
+                    ? 'Отменена'
+                    : 'Статус'
+            }}
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-3">
+            <label class="form-label">
+              Плановая дата <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="date"
+              name="planned_date"
+              class="form-control"
+              required
+              [disabled]="saving"
+              [(ngModel)]="form.planned_date"
+            >
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label">
+              Тип проверки <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="inspection_type"
+              class="form-control"
+              placeholder="Например: плановая"
+              required
+              [disabled]="saving"
+              [(ngModel)]="form.inspection_type"
+            >
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label">
+              Орган контроля <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="authority"
+              class="form-control"
+              placeholder="Контролирующий орган"
+              required
+              [disabled]="saving"
+              [(ngModel)]="form.authority"
+            >
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label">
+              Статус <span class="text-danger">*</span>
+            </label>
+
+            <select
+              name="status"
+              class="form-select"
+              required
+              [disabled]="saving"
+              [(ngModel)]="form.status"
+            >
+              <option value="planned">Запланирована</option>
+              <option value="completed">Завершена</option>
+              <option value="cancelled">Отменена</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Основание</label>
+
+            <input
+              type="text"
+              name="basis"
+              class="form-control"
+              placeholder="Основание проведения проверки"
+              [disabled]="saving"
+              [(ngModel)]="form.basis"
+            >
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Комментарий</label>
+
+            <textarea
+              name="comment"
+              rows="5"
+              class="form-control"
+              placeholder="Дополнительная информация"
+              [disabled]="saving"
+              [(ngModel)]="form.comment"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <div class="text-muted small">
+            Поля, отмеченные <span class="text-danger">*</span>, обязательны для заполнения.
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              [disabled]="saving"
+              (click)="cancel()"
+            >
+              Отмена
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="saving"
+            >
+              <span
+                *ngIf="saving"
+                class="spinner-border spinner-border-sm me-1"
+              ></span>
+
+              {{ saving ? 'Сохранение...' : 'Сохранить проверку' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

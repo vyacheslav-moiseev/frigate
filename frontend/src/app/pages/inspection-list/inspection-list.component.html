@@ -1,0 +1,353 @@
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Перечень плановых проверок</h1>
+      <div class="text-muted">
+        Реестр проверок субъектов малого предпринимательства
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="loading"
+        (click)="create()"
+      >
+        Добавить проверку
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        [disabled]="loading"
+        (click)="load()"
+      >
+        Обновить
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-success"
+        [disabled]="loading"
+        (click)="exportCsv()"
+      >
+        Экспорт
+      </button>
+
+      <label
+        class="btn btn-outline-primary mb-0"
+        [class.disabled]="loading"
+      >
+        Импорт
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          hidden
+          [disabled]="loading"
+          (change)="importCsv($event)"
+        >
+      </label>
+    </div>
+  </div>
+
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <form (ngSubmit)="applyFilters()">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label">Поиск</label>
+            <input
+              type="text"
+              name="q"
+              class="form-control"
+              placeholder="ИНН, название СМП, орган контроля"
+              [disabled]="loading"
+              [(ngModel)]="filters.q"
+            >
+          </div>
+
+          <div class="col-6 col-md-2">
+            <label class="form-label">Дата с</label>
+            <input
+              type="date"
+              name="date_from"
+              class="form-control"
+              [disabled]="loading"
+              [(ngModel)]="filters.date_from"
+            >
+          </div>
+
+          <div class="col-6 col-md-2">
+            <label class="form-label">Дата по</label>
+            <input
+              type="date"
+              name="date_to"
+              class="form-control"
+              [disabled]="loading"
+              [(ngModel)]="filters.date_to"
+            >
+          </div>
+
+          <div class="col-12 col-md-2">
+            <label class="form-label">Статус</label>
+            <select
+              name="status"
+              class="form-select"
+              [disabled]="loading"
+              [(ngModel)]="filters.status"
+            >
+              <option value="">Все</option>
+              <option value="planned">Запланирована</option>
+              <option value="completed">Завершена</option>
+              <option value="cancelled">Отменена</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-2 d-flex align-items-end gap-2">
+            <button
+              type="submit"
+              class="btn btn-primary w-100"
+              [disabled]="loading"
+            >
+              Найти
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              [disabled]="loading"
+              (click)="resetFilters()"
+            >
+              Сброс
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div
+    *ngIf="loading"
+    class="alert alert-info d-flex align-items-center gap-2"
+  >
+    <span class="spinner-border spinner-border-sm"></span>
+    <span>Загрузка данных...</span>
+  </div>
+
+  <div
+    *ngIf="error"
+    class="alert alert-danger"
+  >
+    {{ error }}
+  </div>
+
+  <div
+    *ngIf="errors.length > 0"
+    class="alert alert-danger"
+  >
+    <div class="fw-semibold mb-2">Ошибки:</div>
+
+    <ul class="mb-0">
+      <li *ngFor="let item of errors">
+        {{ item }}
+      </li>
+    </ul>
+  </div>
+
+  <div
+    *ngIf="!loading && items.length === 0"
+    class="card shadow-sm"
+  >
+    <div class="card-body text-center py-5">
+      <div class="h5 mb-2">Проверок пока нет</div>
+      <div class="text-muted mb-3">
+        Добавьте первую проверку или измените параметры поиска.
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="create()"
+      >
+        Добавить проверку
+      </button>
+    </div>
+  </div>
+
+  <div
+    *ngIf="items.length > 0"
+    class="card shadow-sm d-none d-md-block"
+  >
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+        <tr>
+          <th>Дата</th>
+          <th>СМП</th>
+          <th>ИНН</th>
+          <th>Тип</th>
+          <th>Орган контроля</th>
+          <th>Статус</th>
+          <th class="text-end">Действия</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr *ngFor="let item of items; trackBy: trackById">
+          <td class="text-nowrap">
+            {{ item.planned_date }}
+          </td>
+
+          <td>
+            <div class="fw-semibold">
+              {{ item.sme_name || 'Без названия' }}
+            </div>
+
+            <div
+              *ngIf="item.sme_address"
+              class="text-muted small"
+            >
+              {{ item.sme_address }}
+            </div>
+          </td>
+
+          <td class="text-nowrap">
+            {{ item.sme_inn || '—' }}
+          </td>
+
+          <td>
+            {{ item.inspection_type || '—' }}
+          </td>
+
+          <td>
+            {{ item.authority || '—' }}
+          </td>
+
+          <td>
+              <span
+                class="badge"
+                [ngClass]="statusBadgeClass(item.status)"
+              >
+                {{ statusLabel(item.status) }}
+              </span>
+          </td>
+
+          <td class="text-end">
+            <div class="d-inline-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                [disabled]="loading"
+                (click)="edit(item)"
+              >
+                Редактировать
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                [disabled]="loading"
+                (click)="delete(item)"
+              >
+                Удалить
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div
+    *ngIf="items.length > 0"
+    class="d-md-none"
+  >
+    <div
+      *ngFor="let item of items; trackBy: trackById"
+      class="card mb-3 shadow-sm"
+    >
+      <div class="card-body">
+        <div class="d-flex justify-content-between gap-3">
+          <div>
+            <h2 class="h6 mb-1">
+              {{ item.sme_name || 'Без названия' }}
+            </h2>
+
+            <div class="text-muted small">
+              ИНН: {{ item.sme_inn || '—' }}
+            </div>
+          </div>
+
+          <span
+            class="badge align-self-start"
+            [ngClass]="statusBadgeClass(item.status)"
+          >
+            {{ statusLabel(item.status) }}
+          </span>
+        </div>
+
+        <hr>
+
+        <div class="small">
+          <div class="mb-1">
+            <strong>Дата:</strong>
+            {{ item.planned_date || '—' }}
+          </div>
+
+          <div class="mb-1">
+            <strong>Тип:</strong>
+            {{ item.inspection_type || '—' }}
+          </div>
+
+          <div class="mb-1">
+            <strong>Орган:</strong>
+            {{ item.authority || '—' }}
+          </div>
+
+          <div
+            *ngIf="item.sme_address"
+            class="mb-1"
+          >
+            <strong>Адрес:</strong>
+            {{ item.sme_address }}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary w-100"
+            [disabled]="loading"
+            (click)="edit(item)"
+          >
+            Редактировать
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger w-100"
+            [disabled]="loading"
+            (click)="delete(item)"
+          >
+            Удалить
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    *ngIf="items.length > 0"
+    class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mt-3"
+  >
+    <div class="text-muted small">
+      Всего записей: {{ pagination.total }}
+    </div>
+
+    <div class="text-muted small">
+      Страница {{ pagination.page }}, по {{ pagination.per_page }} записей
+    </div>
+  </div>
+</div>
