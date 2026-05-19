@@ -184,6 +184,12 @@ export class InspectionFormComponent implements OnInit, OnDestroy {
   }
 
   private getErrorMessage(error: any): string {
+    const validationMessage = this.getValidationErrorMessage(error);
+
+    if (validationMessage) {
+      return validationMessage;
+    }
+
     if (error?.error?.message) {
       return String(error.error.message);
     }
@@ -192,11 +198,87 @@ export class InspectionFormComponent implements OnInit, OnDestroy {
       return error.error;
     }
 
-    if (error?.message) {
-      return String(error.message);
+    if (error?.status === 0) {
+      return 'Не удалось подключиться к серверу. Проверьте соединение и попробуйте ещё раз.';
     }
 
-    return '';
+    if (error?.status === 400) {
+      return 'Некорректный запрос. Проверьте введённые данные.';
+    }
+
+    if (error?.status === 404) {
+      return 'Запрашиваемая запись не найдена.';
+    }
+
+    if (error?.status === 422) {
+      return 'Проверьте заполнение формы.';
+    }
+
+    if (error?.status >= 500) {
+      return 'На сервере произошла ошибка. Попробуйте повторить позже.';
+    }
+
+    return 'Не удалось выполнить запрос. Попробуйте ещё раз.';
+  }
+
+  private getValidationErrorMessage(error: any): string {
+    const errors = error?.error?.errors;
+
+    if (!errors || typeof errors !== 'object') {
+      return '';
+    }
+
+    const labels: Record<string, string> = {
+      inn: 'ИНН',
+      name: 'Название организации',
+      address: 'Адрес',
+      sme_id: 'СМП',
+      planned_date: 'Плановая дата',
+      inspection_type: 'Тип проверки',
+      authority: 'Орган проверки',
+      basis: 'Основание',
+      status: 'Статус',
+      comment: 'Комментарий',
+    };
+
+    const requiredFields: string[] = [];
+    const invalidFields: string[] = [];
+
+    Object.entries(errors).forEach(([field, rawMessage]) => {
+      const label = labels[field] ?? field;
+      const message = Array.isArray(rawMessage)
+        ? rawMessage.join(' ')
+        : String(rawMessage);
+
+      const normalizedMessage = message.toLowerCase();
+
+      if (
+        normalizedMessage.includes('required') ||
+        normalizedMessage.includes('обяз') ||
+        normalizedMessage.includes('укажите')
+      ) {
+        requiredFields.push(label);
+        return;
+      }
+
+      invalidFields.push(label);
+    });
+
+    const parts: string[] = [];
+
+    if (requiredFields.length > 0) {
+      parts.push(`Заполните обязательные поля: ${this.formatFieldList(requiredFields)}.`);
+    }
+
+    if (invalidFields.length > 0) {
+      parts.push(`Проверьте поля: ${this.formatFieldList(invalidFields)}.`);
+    }
+
+    return parts.join(' ');
+  }
+
+  private formatFieldList(fields: string[]): string {
+    return fields.map((field) => `«${field}»`).join(', ');
   }
 
   private getValidationErrors(error: any): string[] {

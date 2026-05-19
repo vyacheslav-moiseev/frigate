@@ -53,9 +53,11 @@ class SmeController extends BaseController
             return $this->response
                 ->setStatusCode(422)
                 ->setJSON([
+                    'message' => 'Проверьте заполнение полей',
                     'errors' => $validation->getErrors(),
                 ]);
         }
+
 
         $model = new SmeModel();
 
@@ -113,6 +115,7 @@ class SmeController extends BaseController
             return $this->response
                 ->setStatusCode(422)
                 ->setJSON([
+                    'message' => 'Проверьте заполнение полей',
                     'errors' => $validation->getErrors(),
                 ]);
         }
@@ -153,9 +156,31 @@ class SmeController extends BaseController
     private function rules(): array
     {
         return [
-            'inn' => 'required|min_length[5]|max_length[50]',
-            'name' => 'required|min_length[2]|max_length[255]',
-            'address' => 'permit_empty|max_length[500]',
+            'inn' => [
+                'label' => 'ИНН',
+                'rules' => 'required|min_length[5]|max_length[50]',
+                'errors' => [
+                    'required' => 'Укажите ИНН',
+                    'min_length' => 'ИНН должен содержать минимум 5 символов',
+                    'max_length' => 'ИНН не должен быть длиннее 50 символов',
+                ],
+            ],
+            'name' => [
+                'label' => 'Название организации',
+                'rules' => 'required|min_length[2]|max_length[255]',
+                'errors' => [
+                    'required' => 'Укажите название организации',
+                    'min_length' => 'Название организации должно содержать минимум 2 символа',
+                    'max_length' => 'Название организации не должно быть длиннее 255 символов',
+                ],
+            ],
+            'address' => [
+                'label' => 'Адрес',
+                'rules' => 'permit_empty|max_length[500]',
+                'errors' => [
+                    'max_length' => 'Адрес не должен быть длиннее 500 символов',
+                ],
+            ],
         ];
     }
 }
